@@ -77,3 +77,62 @@ The system produces a structured JSON object to ensure clean, parseable results:
   "reasoning": "The question asked about a flying saucer. I searched the plots, found 'The Day the Earth Stood Still' with a flying saucer landing in Washington, D.C., and used it to form the answer."
 }
 ```
+
+
+
+## 🚀 Future Features & Advanced RAG Techniques
+
+To evolve this minimal RAG prototype into a high-performance movie knowledge system, the following features and efficiency improvements are planned, with a focus on metadata-driven Hybrid Search and Automated System Tuning.
+
+1. 🔍 Advanced Retrieval: Metadata-Driven Hybrid Search
+The current system relies solely on semantic similarity of the plot text. Future implementation will upgrade the retrieval component to a powerful Hybrid Search leveraging movie-specific metadata.
+
+ * Metadata Integration: Augment the dataset by pulling additional structured metadata (e.g., Genre, Director, Actors, Release Year) from external APIs (like TMDb) and storing it alongside the plot vectors in the vector store.
+
+ * Hybrid Querying: The system will combine two search methods:
+
+    1. Dense Retrieval (Vector Search): For semantic queries (e.g., "Find movies about loss of memory").
+
+    2. Sparse Retrieval (Keyword/Metadata Filtering): For exact matches and filtering (e.g., "movies directed by Nolan" or "movies from the 1990s").
+
+ * Re-ranking: After retrieval, a second-stage model (a cross-encoder) will re-rank the combined results to ensure the most contextually relevant and filter-matching chunks are prioritized for the LLM.
+
+ 2. 📊 Formal Evaluation and Quality Metrics
+ To ensure system reliability, a formal evaluation loop will be implemented using established RAG metrics.
+
+  * Metrics: Automatically calculate:
+
+    1. Precision: How many of the retrieved chunks were truly relevant to answering the query.
+
+    2. Recall: How many of the total relevant chunks were retrieved by the system.
+
+    3. F1-Score: The harmonic mean of Precision and Recall, providing a single measure of overall retrieval accuracy.
+
+  * Purpose: These metrics are essential for quantifying improvements made by different chunking strategies, embedding models, or re-rankers.
+
+  3. ⚙️ Automated System Tuning and Adaptive Configuration
+  The efficiency of a RAG system heavily depends on correctly setting hyperparameters (e.g., chunk size, k value, embedding model).
+
+  * Automatic LLM Switching: Implement a rule-based or small LLM Router that decides which LLM to use based on the query:
+
+    1. Use an expensive, powerful model (e.g., GPT-4) for complex, multi-step queries.
+
+    2. Use a faster, cheaper model (e.g., GPT-3.5-turbo or a fast open-source alternative) for simple fact extraction where the context is provided.
+
+  Automated Configuration Change: Integrate a framework like RAGAS or a custom evaluation script to run experiments. If a new configuration (e.g., reducing the overlap in chunking) shows a measurable increase in the F1-score on a test set, the system configuration is automatically updated. This enables continuous improvement.
+
+
+  ## ⚡ How to Make it More Efficient
+  Efficiency means achieving better results (accuracy/relevance) with less time and lower cost (fewer tokens/API calls).
+
+  1. Context Distillation (Post-Retrieval):
+
+    * Before sending the retrieved context chunks to the large LLM, use a smaller, cheaper LLM to summarize or compress the chunks into a single, highly-relevant paragraph. This drastically reduces the token count passed to the final generator, which lowers latency and cost.
+
+  2. Semantic Chunking:
+
+    * Instead of splitting plots by a fixed word count (e.g., 300 words), use a model to identify semantically coherent breakpoints (e.g., splitting by scene change or plot twist). This ensures that a single relevant concept is contained within a single chunk, maximizing retrieval quality.
+
+  3. Use a Dedicated Production Vector DB (e.g., Chroma/Pinecone):
+
+    * Switching from the in-memory FAISS index to a persistent vector database allows for incremental updates (adding new movies without re-indexing everything) and better indexing structures (like HNSW graphs), which improve search speed and recall consistency as the dataset grows.
